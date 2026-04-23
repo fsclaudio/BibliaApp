@@ -420,22 +420,45 @@ for (const v of activeVersions) {
             <button onClick={() => setSelectedChapter(prev => Math.max(1, prev - 1))}>⬅️</button>
             <span>Cap. {selectedChapter}</span>
             <button onClick={() => setSelectedChapter(prev => prev + 1)}>➡️</button>
-          <div style={{ display: 'flex', gap: '8px', marginLeft: '12px', alignItems: 'center' }}>
-            {booksLoading ? (
-              <span key="loading">Carregando versões...</span>
-            ) : (
-              availableVersions.map(v => {
-                const meta = apiVersions.find(x => x.version === v) || {};
-                const count = meta.verses ? ` (${meta.verses})` : '';
-                return (
-                  <label key={v} style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <input type="checkbox" checked={activeVersions.includes(v)} onChange={() => toggleVersion(v)} />
-                    {v.toUpperCase()}{count}
-                  </label>
-                );
-              })
-            )}
-          </div>
+          <div style={{ 
+  display: 'flex', 
+  flexWrap: 'wrap', // Permite que os checkboxes pulem para a linha de baixo
+  gap: '12px 8px',  // 12px de espaço entre linhas, 8px entre colunas
+  marginLeft: isMobile ? '0' : '12px', // Remove margem lateral no mobile para ganhar espaço
+  alignItems: 'center',
+  padding: isMobile ? '10px' : '0' 
+}}>
+  {booksLoading ? (
+    <span key="loading">Carregando versões...</span>
+  ) : (
+    availableVersions.map(v => {
+      const meta = apiVersions.find(x => x.version === v) || {};
+      const count = meta.verses ? ` (${meta.verses})` : '';
+      return (
+        <label 
+          key={v} 
+          style={{ 
+            fontSize: '0.9rem', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '4px',
+            whiteSpace: 'nowrap', // Impede que o texto quebre no meio do nome da versão
+            backgroundColor: isMobile ? '#f0f0f0' : 'transparent', // Opcional: melhora o toque no mobile
+            padding: isMobile ? '4px 8px' : '0',
+            borderRadius: '4px'
+          }}
+        >
+          <input 
+            type="checkbox" 
+            checked={activeVersions.includes(v)} 
+            onChange={() => toggleVersion(v)} 
+          />
+          {v.toUpperCase()}{count}
+        </label>
+      );
+    })
+  )}
+</div>
           {/* Busca por texto (POST /api/verses/search) */}
           <div style={{ display: 'flex', gap: '8px', marginLeft: '12px', alignItems: 'center' }}>
             <input
@@ -470,69 +493,81 @@ for (const v of activeVersions) {
           ))}
         </section>
       )}
-
-      <div style={{ display: 'flex', 
-        flexDirection: isMobile ? 'column' : 'row', // Se celular, um embaixo do outro
-        gap: '20px',
-         width: '100%' }}>
-        {/* SIDEBAR COM EXPORTAÇÃO */}
-        <aside style={styles.favSidebar(isMobile)}>
-          <h3>⭐ Favoritos</h3>
-          <button 
+ <div style={{ 
+    width: '100%', 
+    padding: '10px',
+    borderBottom: isMobile ? '1px solid #ddd' : 'none' 
+    }}>
+    <button style={{ backgroundColor: '#28a745', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px' }}
             onClick={exportFavorites} 
             style={styles.btnExport}
-            disabled={favorites.length === 0}
-          >
-            📥 Baixar .TXT
-          </button>
-          
-          <div style={{ marginTop: '15px' }}>
-            {favorites.map((f, i) => (
-              <div key={i} style={styles.favItem}>
-                <strong>{(f.bookName ?? '').toString().toUpperCase()} {f.cap}:{f.number}</strong>
-                <p style={{fontSize: '0.85rem'}}>{(f.text ?? '').toString().substring(0, 30)}...</p>
-                <button onClick={() => toggleFavorite(f)} style={{color: 'red', border: 'none', background: 'none', cursor: 'pointer'}}>Remover</button>
-              </div>
-            ))}
-          </div>
-        </aside>
+            disabled={favorites.length === 0}>
+     📥 Baixar .TXT
+    </button>
+    {/* Lista de favoritos aqui */}
+  </div>
+      {/* 1. Mova o ASIDE para fora do container flex principal */}
+<aside style={{ width: '100%', marginBottom: '20px' }}>
+  <div style={{ marginTop: '15px' }}>
+    <h3 style={{display: 'flex', alignItems: 'center', gap: '10px'}}>⭐ Favoritos</h3>
+    {/* Use um wrap aqui para os favoritos não estourarem a linha */}
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+      {favorites.map((f, i) => (
+        <div key={i} style={styles.favItem}>
+          <strong>{(f.bookName ?? '').toString().toUpperCase()} {f.cap}:{f.number}</strong>
+          <p style={{fontSize: '0.85rem'}}>{(f.text ?? '').toString().substring(0, 30)}...</p>
+          <button onClick={() => toggleFavorite(f)} style={{color: 'red', border: 'none', background: 'none', cursor: 'pointer'}}>Remover</button>
+        </div>
+      ))}
+    </div>
+  </div>
+</aside>
 
-        {/* ÁREA PRINCIPAL */}
-        <main style={styles.grid(activeVersions.length, isMobile)}>
-          {activeVersions.map((v, index) => (
-            <div key={v} style={styles.column(index)}>
-              <h2 style={{ borderBottom: '2px solid #ddd', paddingBottom: '5px', fontSize: '1.1rem' }}>
-  {apiVersions.find(api => api.version === v)?.verses || v.toUpperCase()}</h2>
-              {content[v]?.verses?.map((verse, idx) => (
-                <div key={`${v}-${verse?.number ?? idx}`} style={styles.verseWrapper}>
-                  <button 
-                    onClick={() => toggleFavorite(verse)} 
-                    style={{ ...styles.btnStar, color: favorites.some(f => f.text === verse.text) ? '#f1c40f' : '#ccc' }}
-                  >
-                    ★
-                  </button>
-                  <p>
-                    <strong>{verse.number}</strong>{' '}
-                    {(() => {
-                      const baseline = activeVersions[0];
-                      if (!baseline || baseline === v) return verse.text;
-                      const baseVerse = content[baseline]?.verses?.find(bv => bv.number === verse.number) || { text: '' };
-                      return <DiffVerse leftText={baseVerse.text} rightText={verse.text} />;
-                    })()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ))}
-        </main>
+{/* 2. Agora o container FLEX terá apenas a ÁREA PRINCIPAL, ocupando 100% da largura */}
+<div style={{ 
+  display: 'flex', 
+  width: '100%' 
+}}>
+  <main style={{ 
+    ...styles.grid(activeVersions.length, isMobile), 
+    flex: 1, // Isso garante que a área da bíblia use todo o espaço
+    width: '100%' 
+  }}>
+    {activeVersions.map((v, index) => (
+      <div key={v} style={styles.column(index)}>
+        <h2 style={{ borderBottom: '2px solid #ddd', paddingBottom: '5px', fontSize: '1.1rem' }}>
+          {apiVersions.find(api => api.version === v)?.verses || v.toUpperCase()}
+        </h2>
+        {content[v]?.verses?.map((verse, idx) => (
+          <div key={`${v}-${verse?.number ?? idx}`} style={styles.verseWrapper}>
+            <button 
+              onClick={() => toggleFavorite(verse)} 
+              style={{ ...styles.btnStar, color: favorites.some(f => f.text === verse.text) ? '#f1c40f' : '#ccc' }}
+            >
+              ★
+            </button>
+            <p>
+              <strong>{verse.number}</strong>{' '}
+              {(() => {
+                const baseline = activeVersions[0];
+                if (!baseline || baseline === v) return verse.text;
+                const baseVerse = content[baseline]?.verses?.find(bv => bv.number === verse.number) || { text: '' };
+                return <DiffVerse leftText={baseVerse.text} rightText={verse.text} />;
+              })()}
+            </p>
+          </div>
+        ))}
       </div>
+    ))}
+  </main>
+</div>
     </div>
   );
 };
 
 const styles = {
-  container: { padding: '10px 5px', fontFamily: 'sans-serif', backgroundColor: '#f9f9f9', minHeight: '100vh' },
-  header: { textAlign: 'center', marginBottom: '24px', background: '#fff', padding: '20px 24px', borderRadius: '12px', boxShadow: '0 6px 14px rgba(0,0,0,0.06)', boxSizing: 'border-box' },
+  container: {  width: '100%', padding: '20px', fontFamily: 'sans-serif', backgroundColor: '#f9f9f9', minHeight: '100vh' },
+  header: { textAlign: 'center',color: '#333' ,marginBottom: '24px', background: '#fff', padding: '20px 24px', borderRadius: '12px', boxShadow: '0 6px 14px rgba(0,0,0,0.06)', boxSizing: 'border-box' },
   controls: { 
     display: 'flex', 
     flexWrap: 'wrap', 
