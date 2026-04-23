@@ -11,6 +11,14 @@ const App = () => {
 
   const currentBook = books.find(b => b.abbrev.pt === selectedBook);
   const totalChapters = currentBook ? currentBook.chapters : 0;
+  
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+useEffect(() => {
+  const handleResize = () => setIsMobile(window.innerWidth < 768);
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
   // Atualiza o localStorage sempre que mudar o capítulo
   useEffect(() => {
     localStorage.setItem('lastCap', selectedChapter);
@@ -463,9 +471,12 @@ for (const v of activeVersions) {
         </section>
       )}
 
-      <div style={{ display: 'flex', gap: '20px' }}>
+      <div style={{ display: 'flex', 
+        flexDirection: isMobile ? 'column' : 'row', // Se celular, um embaixo do outro
+        gap: '20px',
+         width: '100%' }}>
         {/* SIDEBAR COM EXPORTAÇÃO */}
-        <aside style={styles.favSidebar}>
+        <aside style={styles.favSidebar(isMobile)}>
           <h3>⭐ Favoritos</h3>
           <button 
             onClick={exportFavorites} 
@@ -487,7 +498,7 @@ for (const v of activeVersions) {
         </aside>
 
         {/* ÁREA PRINCIPAL */}
-        <main style={styles.grid(activeVersions.length)}>
+        <main style={styles.grid(activeVersions.length, isMobile)}>
           {activeVersions.map((v, index) => (
             <div key={v} style={styles.column(index)}>
               <h2 style={{ borderBottom: '2px solid #ddd', paddingBottom: '5px', fontSize: '1.1rem' }}>
@@ -522,12 +533,41 @@ for (const v of activeVersions) {
 const styles = {
   container: { padding: '10px 5px', fontFamily: 'sans-serif', backgroundColor: '#f9f9f9', minHeight: '100vh' },
   header: { textAlign: 'center', marginBottom: '24px', background: '#fff', padding: '20px 24px', borderRadius: '12px', boxShadow: '0 6px 14px rgba(0,0,0,0.06)', boxSizing: 'border-box' },
-  controls: { display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '12px', alignItems: 'center', width: '100%', maxWidth: '1100px', margin: '0 auto' },
-  favSidebar: { width: '220px', background: '#fff', padding: '15px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' },
+  controls: { 
+    display: 'flex', 
+    flexWrap: 'wrap', 
+    justifyContent: 'center', 
+    gap: '12px', 
+    alignItems: 'center', 
+    width: '100%', 
+    maxWidth: '1100px', 
+    margin: '0 auto' 
+  },
+  favSidebar: (isMobile) => ({ 
+    width: isMobile ? '100%' : '220px', 
+    background: '#fff', 
+    padding: '15px', 
+    borderRadius: '10px', 
+    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+    marginBottom: isMobile ? '20px' : '0'
+  }),
   btnExport: { width: '100%', padding: '10px', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' },
   favItem: { padding: '10px', borderBottom: '1px solid #eee', marginBottom: '5px' },
-  grid: (cols) => ({ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '20px', flex: 1 }),
-  column: () => ({ background: '#fff', padding: '20px', borderRadius: '10px', maxHeight: '65vh', overflowY: 'auto' }),
+  grid: (cols, isMobile) => ({ 
+    display: 'grid', 
+    gridTemplateColumns: isMobile ? '1fr' : `repeat(${cols}, 1fr)`, 
+    gap: '15px', 
+    flex: 1,
+    width: '100%'
+  }),
+
+  column: (isMobile) => ({ 
+    background: '#fff', 
+    padding: isMobile ? '15px 10px' : '20px', 
+    borderRadius: '10px', 
+    maxHeight: isMobile ? '70vh' : '65vh', 
+    overflowY: 'auto' 
+  }),
   verseWrapper: { display: 'flex', gap: '10px', marginBottom: '10px' },
   btnStar: { background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' },
   
