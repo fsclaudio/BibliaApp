@@ -535,7 +535,8 @@ for (const v of activeVersions) {
   }}>
     {activeVersions.map((v, index) => (
       <div key={v} style={styles.column(index)}>
-        <h2 style={{ borderBottom: '2px solid #ddd', paddingBottom: '5px', fontSize: '1.1rem' }}>
+        <h2 style={{ borderBottom: '2px solid #ddd', paddingBottom: '5px', fontSize: '1.1rem',backgroundColor: '#007bff', // Azul (você pode trocar por #28a745 para verde ou #6f42c1 para roxo)
+  color: '#fff', }}>
           {apiVersions.find(api => api.version === v)?.verses || v.toUpperCase()}
         </h2>
         {content[v]?.verses?.map((verse, idx) => (
